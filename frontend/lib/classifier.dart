@@ -4,22 +4,23 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter/services.dart';
 
+Future<Uint8List> loadModelBytes(String assetPath) async {
+  final data = await rootBundle.load(assetPath);
+  return data.buffer.asUint8List();
+}
+
 class WasteClassifier {
   Interpreter? _interpreter;
   List<String>? _labels;
 
   static const int INPUT_SIZE = 224;
 
-  Future<void> loadModel() async {
+  Future<void> loadModel(Uint8List bytes) async {
     try {
-      print("TRYING TO LOAD MODEL");
-      final data = await rootBundle.load('assets/waste_classifier.tflite');
-      print("TFLITE MODEL SIZE: ${data.lengthInBytes} bytes");
-      // await io.File("assets/waste_classifier.tflite").exists();
-      // io.File(syncPath).existsSync();
-      // Load the model
-      _interpreter = await Interpreter.fromAsset('assets/waste_classifier.tflite');
 
+      final options = InterpreterOptions()
+        ..useNnApiForAndroid = false;
+      _interpreter =  Interpreter.fromBuffer(bytes, options: options);
       // Load labels
       final labelsData = await rootBundle.loadString('assets/labels.txt');
       _labels = labelsData.split('\n').where((label) => label.isNotEmpty).toList();

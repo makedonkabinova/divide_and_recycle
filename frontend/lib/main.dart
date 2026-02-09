@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'classifier.dart';
 
@@ -15,7 +17,6 @@ class DivideAndRecycle extends StatelessWidget {
     return MaterialApp(
       title: 'Divide & Recycle',
       theme: ThemeData(
-        // primarySwatch: Colors.green,
         useMaterial3: true,
         colorScheme: .fromSeed(seedColor: Colors.green),
       ),
@@ -27,17 +28,6 @@ class DivideAndRecycle extends StatelessWidget {
 
 class WasteClassifierScreen extends StatefulWidget {
   const WasteClassifierScreen({super.key});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  // final String title;
 
   @override
   State<WasteClassifierScreen> createState() => _WasteClassifierScreenState();
@@ -62,12 +52,16 @@ class _WasteClassifierScreenState extends State<WasteClassifierScreen> {
   }
 
   Future<void> _loadModel() async {
-    await _classifier.loadModel();
+    final byteData = await rootBundle.load('assets/waste_classifier.tflite');
+    final modelBytes = byteData.buffer.asUint8List();
+
+    await _classifier.loadModel(modelBytes);
+
+    if (!mounted) return;
     setState(() {
       _modelLoaded = true;
     });
   }
-
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? pickedFile = await _picker.pickImage(source: source);
@@ -101,7 +95,7 @@ class _WasteClassifierScreenState extends State<WasteClassifierScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Waste Classifier'),
+        title: Text('Divide & Recycle'),
         centerTitle: true,
       ),
       body: !_modelLoaded
@@ -163,7 +157,9 @@ class _WasteClassifierScreenState extends State<WasteClassifierScreen> {
               ),
 
               SizedBox(height: 30),
-
+              Text("Note that the app is still in progress and can make mistakes!",
+              style: TextStyle(color: Colors.grey),textAlign: TextAlign.center),
+              SizedBox(height: 30),
               // Results
               if (_isLoading)
                 Center(child: CircularProgressIndicator())
